@@ -1652,8 +1652,11 @@ calculate_axis_value(struct xf86libinput *driver_data,
 		 * device. The user may change the ScrollPixelDistance
 		 * though, so where we have a dist of 10 but an increment of
 		 * 15, we need to scale from 0..10 into 0..15.
+		 *
+		 * We now switched to vdist of 120, so make this
+		 * proportionate - 120/15 is 8.
 		 */
-		value = value/dist * SCROLL_INCREMENT;
+		value = value/dist * SCROLL_INCREMENT * 8;
 	}
 
 	*value_out = value;
@@ -3585,8 +3588,8 @@ xf86libinput_pre_init(InputDriverPtr drv,
 	 * affect touchpad scroll speed. For wheels it doesn't matter as
 	 * we're using the discrete value only.
 	 */
-	driver_data->scroll.v.dist = SCROLL_INCREMENT;
-	driver_data->scroll.h.dist = SCROLL_INCREMENT;
+	driver_data->scroll.v.dist = 120;
+	driver_data->scroll.h.dist = 120;
 
 	if (!is_subdevice) {
 		if (libinput_device_has_capability(device, LIBINPUT_DEVICE_CAP_POINTER))
