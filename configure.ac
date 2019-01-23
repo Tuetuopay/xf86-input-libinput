@@ -62,6 +62,18 @@ AC_LINK_IFELSE(
                 [libinput_have_scroll_button_lock=yes]],
                [AC_MSG_RESULT([no])
                 [libinput_have_scroll_button_lock=no]])
+
+AC_MSG_CHECKING([if libinput_event_pointer_get_scroll_value_v120 is available])
+AC_LINK_IFELSE(
+               [AC_LANG_PROGRAM([[#include <libinput.h>]],
+                                [[libinput_event_pointer_get_scroll_value_v120(NULL, 0)]])],
+               [AC_MSG_RESULT([yes])
+                AC_DEFINE(HAVE_LIBINPUT_AXIS_VALUE_V120, [1],
+                          [libinput_event_pointer_get_scroll_value_v120() is available])
+                [libinput_have_axis_value_v120=yes]],
+               [AC_MSG_RESULT([no])
+                [libinput_have_axis_value_v120=no]])
+
 LIBS=$OLD_LIBS
 CFLAGS=$OLD_CFLAGS
 

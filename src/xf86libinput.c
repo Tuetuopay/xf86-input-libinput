@@ -1565,9 +1565,9 @@ xf86libinput_handle_key(InputInfoPtr pInfo, struct libinput_event_keyboard *even
  * so the use-case above shouldn't matter anymore.
  */
 static inline double
-get_wheel_scroll_value(struct xf86libinput *driver_data,
-		       struct libinput_event_pointer *event,
-		       enum libinput_pointer_axis axis)
+guess_wheel_scroll_value(struct xf86libinput *driver_data,
+			 struct libinput_event_pointer *event,
+			 enum libinput_pointer_axis axis)
 {
 	struct scroll_axis *s;
 	double f;
@@ -1627,6 +1627,54 @@ out:
 	return s->dist/s->fraction * discrete;
 }
 
+#if HAVE_LIBINPUT_AXIS_VALUE_V120
+static inline double
+get_wheel_120_value(struct xf86libinput *driver_data,
+		    struct libinput_event_pointer *event,
+		    enum libinput_pointer_axis axis)
+{
+	struct scroll_axis *s;
+	double angle;
+
+	switch (axis) {
+	case LIBINPUT_POINTER_AXIS_SCROLL_HORIZONTAL:
+		s = &driver_data->scroll.h;
+		break;
+	case LIBINPUT_POINTER_AXIS_SCROLL_VERTICAL:
+		s = &driver_data->scroll.v;
+		break;
+	default:
+		return 0.0;
+	}
+
+	angle = libinput_event_pointer_get_scroll_value_v120(event, axis);
+	return s->dist * angle/120;
+}
+#endif
+
+static inline double
+get_wheel_scroll_value(struct xf86libinput *driver_data,
+		       struct libinput_event_pointer *event,
+		       enum libinput_pointer_axis axis)
+{
+#if HAVE_LIBINPUT_AXIS_VALUE_V120
+	return get_wheel_120_value(driver_data, event, axis);
+#else
+	return guess_wheel_scroll_value(driver_data, event, axis);
+#endif
+}
+
+static inline double
+get_finger_or_continuous_scroll_value(struct libinput_event_pointer *event,
+				      enum libinput_pointer_axis axis)
+{
+#if HAVE_LIBINPUT_AXIS_VALUE_V120
+	return libinput_event_pointer_get_scroll_value(event, axis);
+#else
+	return libinput_event_pointer_get_axis_value(event, axis);
+#endif
+}
+
 static inline bool
 calculate_axis_value(struct xf86libinput *driver_data,
 		     enum libinput_pointer_axis axis,
@@ -1639,13 +1687,21 @@ calculate_axis_value(struct xf86libinput *driver_data,
 	if (!libinput_event_pointer_has_axis(event, axis))
 		return false;
 
+	/* Event may be LIBINPUT_POINTER_AXIS or
+	 * LIBINPUT_EVENT_POINTER_SCROLL_{WHEEL|FINGER|CONTINUOUS}, depending
+	 * on the libinput version.
+	 *
+	 * libinput guarantees the axis source is set for the second set of
+	 * events too but we can switch to the event type once we ditch
+	 * libinput < 1.19 support.
+	 */
 	if (source == LIBINPUT_POINTER_AXIS_SOURCE_WHEEL) {
 		value = get_wheel_scroll_value(driver_data, event, axis);
 	} else {
 		double dist = driver_data->options.scroll_pixel_distance;
 		assert(dist != 0.0);
 
-		value = libinput_event_pointer_get_axis_value(event, axis);
+		value = get_finger_or_continuous_scroll_value(event, axis);
 		/* We need to scale this value into our scroll increment range
 		 * because that one is constant for the lifetime of the
 		 * device. The user may change the ScrollPixelDistance
@@ -1665,29 +1721,21 @@ calculate_axis_value(struct xf86libinput *driver_data,
 
 static void
 xf86libinput_handle_axis(InputInfoPtr pInfo,
-			 struct libinput_event_pointer *event,
+			 struct libinput_event *e,
 			 enum libinput_pointer_axis_source source)
 {
+	struct libinput_event_pointer *event;
 	DeviceIntPtr dev = pInfo->dev;
 	struct xf86libinput *driver_data = pInfo->private;
 	ValuatorMask *mask = driver_data->valuators;
 	double value;
-	enum libinput_pointer_axis_source source;
 
 	if ((driver_data->capabilities & CAP_POINTER) == 0)
 		return;
 
 	valuator_mask_zero(mask);
 
-	switch(source) {
-		case LIBINPUT_POINTER_AXIS_SOURCE_FINGER:
-		case LIBINPUT_POINTER_AXIS_SOURCE_WHEEL:
-		case LIBINPUT_POINTER_AXIS_SOURCE_CONTINUOUS:
-			break;
-		default:
-			return;
-	}
-
+	event = libinput_event_get_pointer_event(e);
 	if (calculate_axis_value(driver_data,
 				 LIBINPUT_POINTER_AXIS_SCROLL_VERTICAL,
 				 event,
@@ -1704,6 +1752,11 @@ xf86libinput_handle_axis(InputInfoPtr pInfo,
 				 source,
 				 &value))
 		valuator_mask_set_double(mask, 2, value);
+
+	if (source == LIBINPUT_POINTER_AXIS_SOURCE_WHEEL &&
+	    !valuator_mask_isset(mask, 2) &&
+	    !valuator_mask_isset(mask, 3))
+		return;
 
 out:
 	xf86PostMotionEventM(dev, Relative, mask);
@@ -2382,10 +2435,30 @@ xf86libinput_handle_event(struct libinput_event *event)
 						libinput_event_get_keyboard_event(event));
 			break;
 		case LIBINPUT_EVENT_POINTER_AXIS:
+#if !HAVE_LIBINPUT_AXIS_VALUE_V120
+			/* ignore POINTER_AXIS where we have libinput 1.19 and higher */
 			xf86libinput_handle_axis(pInfo,
-						 libinput_event_get_pointer_event(event),
+						 event,
 						 libinput_event_pointer_get_axis_source(event));
+#endif
 			break;
+#if HAVE_LIBINPUT_AXIS_VALUE_V120
+		case LIBINPUT_EVENT_POINTER_SCROLL_WHEEL:
+			xf86libinput_handle_axis(pInfo,
+						 event,
+						 LIBINPUT_POINTER_AXIS_SOURCE_WHEEL);
+			break;
+		case LIBINPUT_EVENT_POINTER_SCROLL_FINGER:
+			xf86libinput_handle_axis(pInfo,
+						 event,
+						 LIBINPUT_POINTER_AXIS_SOURCE_FINGER);
+			break;
+		case LIBINPUT_EVENT_POINTER_SCROLL_CONTINUOUS:
+			xf86libinput_handle_axis(pInfo,
+						 event,
+						 LIBINPUT_POINTER_AXIS_SOURCE_CONTINUOUS);
+			break;
+#endif
 		case LIBINPUT_EVENT_TOUCH_FRAME:
 			break;
 		case LIBINPUT_EVENT_TOUCH_UP:
