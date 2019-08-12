@@ -2339,6 +2339,8 @@ xf86libinput_handle_event(struct libinput_event *event)
 			xf86libinput_handle_tablet_pad_strip(pInfo,
 							     libinput_event_get_tablet_pad_event(event));
 			break;
+		case LIBINPUT_EVENT_SWITCH_TOGGLE:
+			break;
 	}
 
 out:

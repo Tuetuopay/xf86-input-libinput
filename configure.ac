@@ -45,7 +45,7 @@ XORG_DEFAULT_OPTIONS
 
 # Obtain compiler/linker options from server and required extensions
 PKG_CHECK_MODULES(XORG, [xorg-server >= 1.10] xproto [inputproto >= 2.2])
-PKG_CHECK_MODULES(LIBINPUT, [libinput >= 1.4.901])
+PKG_CHECK_MODULES(LIBINPUT, [libinput >= 1.7.0])
 
 OLD_LIBS=$LIBS
 OLD_CFLAGS=$CFLAGS
