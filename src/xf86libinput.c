@@ -157,6 +157,7 @@ struct xf86libinput {
 		BOOL disable_while_typing;
 		CARD32 sendevents;
 		CARD32 scroll_button; /* xorg button number */
+		BOOL scroll_buttonlock;
 		float speed;
 		float matrix[9];
 		enum libinput_config_scroll_method scroll_method;
@@ -672,12 +673,27 @@ LibinputApplyConfigScrollMethod(DeviceIntPtr dev,
 
 	if (libinput_device_config_scroll_get_methods(device) & LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN) {
 		unsigned int scroll_button;
+#if HAVE_LIBINPUT_SCROLL_BUTTON_LOCK
+		enum libinput_config_scroll_button_lock_state buttonlock;
+
+		buttonlock = driver_data->options.scroll_buttonlock ?
+				LIBINPUT_CONFIG_SCROLL_BUTTON_LOCK_ENABLED :
+				LIBINPUT_CONFIG_SCROLL_BUTTON_LOCK_DISABLED;
+
+		if (libinput_device_config_scroll_set_button_lock(device, buttonlock)
+		    != LIBINPUT_CONFIG_STATUS_SUCCESS) {
+			xf86IDrvMsg(pInfo, X_ERROR,
+				    "Failed to %s ScrollButtonLock\n",
+				    buttonlock ? "enable" : "disable");
+		}
+#endif
 
 		scroll_button = btn_xorg2linux(driver_data->options.scroll_button);
 		if (libinput_device_config_scroll_set_button(device, scroll_button) != LIBINPUT_CONFIG_STATUS_SUCCESS)
 			xf86IDrvMsg(pInfo, X_ERROR,
 				    "Failed to set ScrollButton to %u\n",
 				    driver_data->options.scroll_button);
+
 	}
 }
 
@@ -2826,6 +2842,32 @@ xf86libinput_parse_scrollbutton_option(InputInfoPtr pInfo,
 	return scroll_button;
 }
 
+static inline BOOL
+xf86libinput_parse_scrollbuttonlock_option(InputInfoPtr pInfo,
+					   struct libinput_device *device)
+{
+	bool dflt;
+	BOOL buttonlock = FALSE;
+
+	if ((libinput_device_config_scroll_get_methods(device) &
+	    LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN) == 0)
+		return 0;
+
+#if HAVE_LIBINPUT_SCROLL_BUTTON_LOCK
+	dflt = libinput_device_config_scroll_get_default_button_lock(device);
+	buttonlock = xf86SetBoolOption(pInfo->options, "ScrollButtonLock", dflt);
+
+	if (libinput_device_config_scroll_set_button_lock(device, buttonlock)
+						     != LIBINPUT_CONFIG_STATUS_SUCCESS) {
+		xf86IDrvMsg(pInfo, X_ERROR,
+			    "Failed to %s ScrollButtonLock\n",
+			    buttonlock ? "enable" : "disable");
+		buttonlock = libinput_device_config_scroll_get_button_lock(device);
+	}
+#endif
+	return buttonlock;
+}
+
 static inline unsigned int
 xf86libinput_parse_clickmethod_option(InputInfoPtr pInfo,
 				      struct libinput_device *device)
@@ -3106,6 +3148,7 @@ xf86libinput_parse_options(InputInfoPtr pInfo,
 	options->left_handed = xf86libinput_parse_lefthanded_option(pInfo, device);
 	options->scroll_method = xf86libinput_parse_scroll_option(pInfo, device);
 	options->scroll_button = xf86libinput_parse_scrollbutton_option(pInfo, device);
+	options->scroll_buttonlock = xf86libinput_parse_scrollbuttonlock_option(pInfo, device);
 	options->click_method = xf86libinput_parse_clickmethod_option(pInfo, device);
 	options->middle_emulation = xf86libinput_parse_middleemulation_option(pInfo, device);
 	options->disable_while_typing = xf86libinput_parse_disablewhiletyping_option(pInfo, device);
@@ -3570,6 +3613,8 @@ static Atom prop_scroll_method_enabled;
 static Atom prop_scroll_method_default;
 static Atom prop_scroll_button;
 static Atom prop_scroll_button_default;
+static Atom prop_scroll_buttonlock;
+static Atom prop_scroll_buttonlock_default;
 static Atom prop_click_methods_available;
 static Atom prop_click_method_enabled;
 static Atom prop_click_method_default;
@@ -4148,6 +4193,33 @@ LibinputSetPropertyScrollButton(DeviceIntPtr dev,
 }
 
 static inline int
+LibinputSetPropertyScrollButtonLock(DeviceIntPtr dev,
+				    Atom atom,
+				    XIPropertyValuePtr val,
+				    BOOL checkonly)
+{
+	InputInfoPtr pInfo = dev->public.devicePrivate;
+	struct xf86libinput *driver_data = pInfo->private;
+	BOOL enabled;
+
+	if (val->format != 8 || val->type != XA_INTEGER || val->size != 1)
+		return BadMatch;
+
+	enabled = *(BOOL*)val->data;
+	if (checkonly) {
+		if (enabled != 0 && enabled != 1)
+			return BadValue;
+
+		if (!xf86libinput_check_device (dev, atom))
+			return BadMatch;
+	} else {
+		driver_data->options.scroll_buttonlock = enabled;
+	}
+
+	return Success;
+}
+
+static inline int
 LibinputSetPropertyClickMethod(DeviceIntPtr dev,
 			       Atom atom,
 			       XIPropertyValuePtr val,
@@ -4521,6 +4593,8 @@ LibinputSetProperty(DeviceIntPtr dev, Atom atom, XIPropertyValuePtr val,
 		rc = LibinputSetPropertyScrollMethods(dev, atom, val, checkonly);
 	else if (atom == prop_scroll_button)
 		rc = LibinputSetPropertyScrollButton(dev, atom, val, checkonly);
+	else if (atom == prop_scroll_buttonlock)
+		rc = LibinputSetPropertyScrollButtonLock(dev, atom, val, checkonly);
 	else if (atom == prop_click_method_enabled)
 		rc = LibinputSetPropertyClickMethod(dev, atom, val, checkonly);
 	else if (atom == prop_middle_emulation)
@@ -4561,6 +4635,7 @@ LibinputSetProperty(DeviceIntPtr dev, Atom atom, XIPropertyValuePtr val,
 		 atom == prop_scroll_method_default ||
 		 atom == prop_scroll_methods_available ||
 		 atom == prop_scroll_button_default ||
+		 atom == prop_scroll_buttonlock_default ||
 		 atom == prop_click_method_default ||
 		 atom == prop_click_methods_available ||
 		 atom == prop_middle_emulation_default ||
@@ -5051,10 +5126,11 @@ LibinputInitScrollMethodsProperty(DeviceIntPtr dev,
 							  XA_INTEGER, 8,
 							  ARRAY_SIZE(methods),
 							  methods);
-	/* Scroll button */
+	/* Scroll button and scroll button lock */
 	if (libinput_device_config_scroll_get_methods(device) &
 	    LIBINPUT_CONFIG_SCROLL_ON_BUTTON_DOWN) {
 		CARD32 scroll_button = driver_data->options.scroll_button;
+		BOOL lock_enabled = driver_data->options.scroll_buttonlock;
 
 		prop_scroll_button = LibinputMakeProperty(dev,
 							  LIBINPUT_PROP_SCROLL_BUTTON,
@@ -5063,12 +5139,26 @@ LibinputInitScrollMethodsProperty(DeviceIntPtr dev,
 		if (!prop_scroll_button)
 			return;
 
+#if HAVE_LIBINPUT_SCROLL_BUTTON_LOCK
 		scroll_button = libinput_device_config_scroll_get_default_button(device);
 		scroll_button = btn_linux2xorg(scroll_button);
 		prop_scroll_button_default = LibinputMakeProperty(dev,
 								  LIBINPUT_PROP_SCROLL_BUTTON_DEFAULT,
 								  XA_CARDINAL, 32,
 								  1, &scroll_button);
+		prop_scroll_buttonlock = LibinputMakeProperty(dev,
+							      LIBINPUT_PROP_SCROLL_BUTTON_LOCK,
+							      XA_INTEGER, 8,
+							      1, &lock_enabled);
+		if (!prop_scroll_buttonlock)
+			return;
+
+		lock_enabled = libinput_device_config_scroll_get_default_button_lock(device);
+		prop_scroll_buttonlock_default = LibinputMakeProperty(dev,
+								      LIBINPUT_PROP_SCROLL_BUTTON_LOCK_DEFAULT,
+								      XA_INTEGER, 8,
+								      1, &lock_enabled);
+#endif
 	}
 }
 

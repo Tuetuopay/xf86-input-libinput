@@ -115,6 +115,12 @@
 /* Scroll button for button scrolling: 32-bit int, 1 value, read-only */
 #define LIBINPUT_PROP_SCROLL_BUTTON_DEFAULT "libinput Button Scrolling Button Default"
 
+/* Scroll button lock: BOOL, 1 value, TRUE for enabled, FALSE otherwise */
+#define LIBINPUT_PROP_SCROLL_BUTTON_LOCK "libinput Button Scrolling Button Lock Enabled"
+
+/* Scroll button lock: BOOL, 1 value, TRUE for enabled, FALSE otherwise, read-only*/
+#define LIBINPUT_PROP_SCROLL_BUTTON_LOCK_DEFAULT "libinput Button Scrolling Button Lock Enabled Default"
+
 /* Click method: BOOL read-only, 2 values in order buttonareas, clickfinger
    shows available click methods */
 #define LIBINPUT_PROP_CLICK_METHODS_AVAILABLE "libinput Click Methods Available"

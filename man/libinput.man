@@ -139,8 +139,17 @@ Designates a button as scroll button. If the
 .BI ScrollMethod
 is
 .BI button
-and the button is logically held down, x/y axis movement is converted into
+and the button is logically down, x/y axis movement is converted into
 scroll events.
+.TP 7
+.BI "Option \*qScrollButtonLock\*q \*q" bool \*q
+Enables or disables the scroll button lock. If enabled, the 
+.BI ScrollButton
+is considered logically down after the first click and remains down until
+the second click of that button. If disabled (the default), the 
+.BI ScrollButton
+button is considered logically down while held down and up once physically
+released.
 .TP 7
 .BI "Option \*qScrollMethod\*q \*q" string \*q
 Enables a scroll method. Permitted values are
@@ -218,6 +227,12 @@ Indicates which acceleration profile is currently enabled on this device.
 1 32-bit value. Sets the button number to use for button scrolling. This
 setting is independent of the scroll method, to enable button scrolling the
 method must be set to button-scrolling and a valid button must be set.
+.TP 7
+.BI "libinput Button Scrolling Button Lock Enabled"
+1 boolean value. If true, the scroll button lock is enabled.  This
+setting is independent of the scroll method or the scroll button, to enable
+button scrolling the method must be set to button-scrolling and a valid
+button must be set.
 .TP 7
 .BI "libinput Calibration Matrix"
 9 32-bit float values, representing a 3x3 calibration matrix, order is row

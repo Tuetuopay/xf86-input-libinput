@@ -61,6 +61,17 @@ AC_LINK_IFELSE(
                 [libinput_have_touch_count=yes]],
                [AC_MSG_RESULT([no])
                 [libinput_have_touch_count=no]])
+
+AC_MSG_CHECKING([if libinput_device_config_scroll_get_button_lock is available])
+AC_LINK_IFELSE(
+               [AC_LANG_PROGRAM([[#include <libinput.h>]],
+                                [[libinput_device_config_scroll_get_button_lock(NULL)]])],
+               [AC_MSG_RESULT([yes])
+                AC_DEFINE(HAVE_LIBINPUT_SCROLL_BUTTON_LOCK, [1],
+                          [libinput_device_config_scroll_get_button_lock() is available])
+                [libinput_have_scroll_button_lock=yes]],
+               [AC_MSG_RESULT([no])
+                [libinput_have_scroll_button_lock=no]])
 LIBS=$OLD_LIBS
 CFLAGS=$OLD_CFLAGS
 
