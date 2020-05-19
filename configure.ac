@@ -23,7 +23,7 @@
 # Initialize Autoconf
 AC_PREREQ([2.60])
 AC_INIT([xf86-input-libinput],
-        [0.29.0],
+        [0.30.0],
         [https://gitlab.freedesktop.org/xorg/driver/xf86-input-libinput/issues],
         [xf86-input-libinput])
 AC_CONFIG_SRCDIR([Makefile.am])
