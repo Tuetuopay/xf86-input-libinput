@@ -1104,11 +1104,9 @@ xf86libinput_init_touch(InputInfoPtr pInfo)
 			           XIGetKnownProperty(AXIS_LABEL_PROP_ABS_MT_POSITION_Y),
 				   min, max, res * 1000, 0, res * 1000, Absolute);
 
-#if HAVE_LIBINPUT_TOUCH_COUNT
 	ntouches = libinput_device_touch_get_touch_count(device);
 	if (ntouches == 0) /* unknown -  mtdev */
 		ntouches = TOUCH_MAX_SLOTS;
-#endif
 	InitTouchClassDeviceStruct(dev, ntouches, XIDirectTouch, 2);
 
 }
