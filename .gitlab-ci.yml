@@ -8,7 +8,7 @@ include:
 
 variables:
   FEDORA_RPMS: 'git autoconf automake libtool make xorg-x11-server-devel libudev-devel libevdev-devel libinput-devel xorg-x11-util-macros'
-  FEDORA_TAG: '2019-08-12.0'
+  FEDORA_TAG: '2020-05-19.0'
   UPSTREAM_REPO: xorg/drivers/xf86-input-libinput
   BUILDAH_IMAGE: $CI_REGISTRY/wayland/ci-templates/buildah:latest
   FEDORA_CONTAINER_IMAGE: $CI_REGISTRY_IMAGE/fedora/$FEDORA_VERSION:$FEDORA_TAG
@@ -24,7 +24,7 @@ container_build:
   stage: containers-build
   variables:
     GIT_STRATEGY: none
-    FEDORA_VERSION: 30
+    FEDORA_VERSION: 32
 
 
 .default_artifacts: &default_artifacts
@@ -58,7 +58,7 @@ container_build:
   image: $FEDORA_CONTAINER_IMAGE
 
 
-fedora:30@default-build:
+fedora:32@default-build:
   extends: .fedora-build@template
   variables:
-    FEDORA_VERSION: 30
+    FEDORA_VERSION: 32
