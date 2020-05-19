@@ -46,20 +46,6 @@
 #include "draglock.h"
 #include "libinput-properties.h"
 
-#ifndef XI86_SERVER_FD
-#define XI86_SERVER_FD 0x20
-#endif
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) * 1000 + GET_ABI_MINOR(ABI_XINPUT_VERSION) > 22000
-#define HAVE_VMASK_UNACCEL 1
-#else
-#undef HAVE_VMASK_UNACCEL
-#endif
-
-#if GET_ABI_MAJOR(ABI_XINPUT_VERSION) >= 23
-#define HAVE_THREADED_INPUT	1
-#endif
-
 #define TOUCHPAD_NUM_AXES 4 /* x, y, hscroll, vscroll */
 #define TABLET_NUM_BUTTONS 7 /* we need scroll buttons */
 #define TOUCH_MAX_SLOTS 15
@@ -820,13 +806,8 @@ xf86libinput_on(DeviceIntPtr dev)
 	pInfo->fd = libinput_get_fd(libinput);
 
 	if (driver_context.device_enabled_count == 0) {
-#if HAVE_THREADED_INPUT
 		xf86AddEnabledDevice(pInfo);
 		driver_context.registered_InputInfoPtr = pInfo;
-#else
-		/* Can't use xf86AddEnabledDevice on an epollfd */
-		AddEnabledDevice(pInfo->fd);
-#endif
 	}
 
 	driver_context.device_enabled_count++;
@@ -845,11 +826,7 @@ xf86libinput_off(DeviceIntPtr dev)
 	struct xf86libinput_device *shared_device = driver_data->shared_device;
 
 	if (--driver_context.device_enabled_count == 0) {
-#if HAVE_THREADED_INPUT
 		xf86RemoveEnabledDevice(pInfo);
-#else
-		RemoveEnabledDevice(pInfo->fd);
-#endif
 	}
 
 	if (use_server_fd(pInfo)) {
@@ -1405,19 +1382,11 @@ swap_registered_device(InputInfoPtr pInfo)
 	while (next == pInfo || !is_libinput_device(next))
 		next = next->next;
 
-#if HAVE_THREADED_INPUT
 	input_lock();
-#else
-	int sigstate = xf86BlockSIGIO();
-#endif
 	xf86RemoveEnabledDevice(pInfo);
 	xf86AddEnabledDevice(next);
 	driver_context.registered_InputInfoPtr = next;
-#if HAVE_THREADED_INPUT
 	input_unlock();
-#else
-	xf86UnblockSIGIO(sigstate);
-#endif
 }
 
 static void
@@ -1486,7 +1455,6 @@ xf86libinput_handle_motion(InputInfoPtr pInfo, struct libinput_event_pointer *ev
 
 	valuator_mask_zero(mask);
 
-#if HAVE_VMASK_UNACCEL
 	{
 		double ux, uy;
 
@@ -1496,10 +1464,6 @@ xf86libinput_handle_motion(InputInfoPtr pInfo, struct libinput_event_pointer *ev
 		valuator_mask_set_unaccelerated(mask, 0, x, ux);
 		valuator_mask_set_unaccelerated(mask, 1, y, uy);
 	}
-#else
-	valuator_mask_set_double(mask, 0, x);
-	valuator_mask_set_double(mask, 1, y);
-#endif
 	xf86PostMotionEventM(dev, Relative, mask);
 }
 
@@ -3237,20 +3201,12 @@ xf86libinput_hotplug_device(struct xf86libinput_hotplug_info *hotplug)
 {
 	DeviceIntPtr dev;
 
-#if HAVE_THREADED_INPUT
 	input_lock();
-#else
-	int sigstate = xf86BlockSIGIO();
-#endif
 	if (NewInputDeviceRequest(hotplug->input_options,
 				  hotplug->attrs,
 				  &dev) != Success)
 		dev = NULL;
-#if HAVE_THREADED_INPUT
 	input_unlock();
-#else
-	xf86UnblockSIGIO(sigstate);
-#endif
 
 	input_option_free_list(&hotplug->input_options);
 	FreeInputAttributes(hotplug->attrs);
@@ -3550,9 +3506,7 @@ InputDriverRec xf86libinput_driver = {
 	.UnInit		= xf86libinput_uninit,
 	.module		= NULL,
 	.default_options= NULL,
-#ifdef XI86_DRV_CAP_SERVER_FD
 	.capabilities	= XI86_DRV_CAP_SERVER_FD
-#endif
 };
 
 static XF86ModuleVersionInfo xf86libinput_version_info = {

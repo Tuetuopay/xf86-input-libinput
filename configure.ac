@@ -44,7 +44,7 @@ XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 # Obtain compiler/linker options from server and required extensions
-PKG_CHECK_MODULES(XORG, [xorg-server >= 1.10] xproto [inputproto >= 2.2])
+PKG_CHECK_MODULES(XORG, [xorg-server >= 1.19] xproto [inputproto >= 2.2])
 PKG_CHECK_MODULES(LIBINPUT, [libinput >= 1.11.0])
 
 OLD_LIBS=$LIBS
