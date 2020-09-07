@@ -1052,13 +1052,11 @@ xf86libinput_init_touch(InputInfoPtr pInfo)
 	struct xf86libinput *driver_data = pInfo->private;
 	struct libinput_device *device = driver_data->shared_device->device;
 	int min, max, res;
-	unsigned char btnmap[MAX_BUTTONS + 1];
 	Atom btnlabels[MAX_BUTTONS];
 	Atom axislabels[TOUCHPAD_NUM_AXES];
 	int nbuttons = 7;
 	int ntouches = TOUCH_MAX_SLOTS;
 
-	init_button_map(btnmap, ARRAY_SIZE(btnmap));
 	init_button_labels(btnlabels, ARRAY_SIZE(btnlabels));
 	init_axis_labels(axislabels, ARRAY_SIZE(axislabels));
 
@@ -1193,7 +1191,6 @@ xf86libinput_init_tablet(InputInfoPtr pInfo)
 	struct xf86libinput *driver_data = pInfo->private;
 	struct libinput_tablet_tool *tool;
 	int min, max, res;
-	unsigned char btnmap[TABLET_NUM_BUTTONS];
 	Atom btnlabels[TABLET_NUM_BUTTONS] = {0};
 	Atom axislabels[TOUCHPAD_NUM_AXES] = {0};
 	int nbuttons = TABLET_NUM_BUTTONS;
@@ -1202,8 +1199,6 @@ xf86libinput_init_tablet(InputInfoPtr pInfo)
 	BUG_RETURN(driver_data->tablet_tool == NULL);
 
 	tool = driver_data->tablet_tool;
-
-	init_button_map(btnmap, ARRAY_SIZE(btnmap));
 
 	if (libinput_tablet_tool_has_pressure(tool))
 		naxes++;
@@ -1260,14 +1255,12 @@ xf86libinput_init_tablet_pad(InputInfoPtr pInfo)
 	struct xf86libinput *driver_data = pInfo->private;
 	struct libinput_device *device = driver_data->shared_device->device;
 	int min, max, res;
-	unsigned char btnmap[MAX_BUTTONS];
 	Atom btnlabels[MAX_BUTTONS] = {0};
 	Atom axislabels[TOUCHPAD_NUM_AXES] = {0};
 	int nbuttons;
 	int naxes = 7;
 
 	nbuttons = libinput_device_tablet_pad_get_num_buttons(device) + 4;
-	init_button_map(btnmap, nbuttons);
 
 	InitPointerDeviceStruct((DevicePtr)dev,
 				driver_data->options.btnmap,
