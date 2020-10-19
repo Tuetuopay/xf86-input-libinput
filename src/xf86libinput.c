@@ -1705,7 +1705,7 @@ xf86libinput_handle_touch(InputInfoPtr pInfo,
 			break;
 		default:
 			return;
-	};
+	}
 
 	valuator_mask_zero(m);
 
