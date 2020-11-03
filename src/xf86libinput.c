@@ -1698,6 +1698,7 @@ xf86libinput_handle_touch(InputInfoPtr pInfo,
 			touchids[slot] = next_touchid++;
 			break;
 		case LIBINPUT_EVENT_TOUCH_UP:
+		case LIBINPUT_EVENT_TOUCH_CANCEL:
 			type = XI_TouchEnd;
 			break;
 		case LIBINPUT_EVENT_TOUCH_MOTION:
@@ -1709,7 +1710,7 @@ xf86libinput_handle_touch(InputInfoPtr pInfo,
 
 	valuator_mask_zero(m);
 
-	if (event_type != LIBINPUT_EVENT_TOUCH_UP) {
+	if (type != XI_TouchEnd) {
 		val = libinput_event_touch_get_x_transformed(event, TOUCH_AXIS_MAX);
 		valuator_mask_set_double(m, 0, val);
 
