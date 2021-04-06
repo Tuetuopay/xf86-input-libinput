@@ -17,9 +17,9 @@ stages:
 
 .fedora:
   variables:
-    FDO_DISTRIBUTION_VERSION: 32
+    FDO_DISTRIBUTION_VERSION: 33
     FDO_DISTRIBUTION_PACKAGES: 'git autoconf automake libtool make xorg-x11-server-devel libudev-devel libevdev-devel libinput-devel xorg-x11-util-macros'
-    FDO_DISTRIBUTION_TAG: '2020-05-19.0'
+    FDO_DISTRIBUTION_TAG: '2021-04-06.0'
 
 
 fedora@container_build:
@@ -48,7 +48,7 @@ fedora@container_build:
       - _builddir/config.log
 
 
-fedora:32@default-build:
+fedora:33@default-build:
   extends:
     - .fedora
     - .fdo.distribution-image@fedora
