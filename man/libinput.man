@@ -143,10 +143,10 @@ and the button is logically down, x/y axis movement is converted into
 scroll events.
 .TP 7
 .BI "Option \*qScrollButtonLock\*q \*q" bool \*q
-Enables or disables the scroll button lock. If enabled, the 
+Enables or disables the scroll button lock. If enabled, the
 .BI ScrollButton
 is considered logically down after the first click and remains down until
-the second click of that button. If disabled (the default), the 
+the second click of that button. If disabled (the default), the
 .BI ScrollButton
 button is considered logically down while held down and up once physically
 released.
