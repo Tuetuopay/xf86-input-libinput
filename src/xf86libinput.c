@@ -3812,9 +3812,13 @@ LibinputSetPropertyTapButtonmap(DeviceIntPtr dev,
 
 	data = (BOOL*)val->data;
 
-	if (checkonly &&
-	    ((data[0] && data[1]) || (!data[0] && !data[1])))
+	if (checkonly) {
+	    if ((data[0] && data[1]) || (!data[0] && !data[1]))
 		return BadValue;
+
+	    if (!xf86libinput_check_device (dev, atom))
+		return BadMatch;
+	}
 
 	if (data[0])
 		map = LIBINPUT_CONFIG_TAP_MAP_LRM;
