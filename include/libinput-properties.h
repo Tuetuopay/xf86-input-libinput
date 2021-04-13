@@ -123,6 +123,12 @@
 /* Scroll button lock: BOOL, 1 value, TRUE for enabled, FALSE otherwise, read-only*/
 #define LIBINPUT_PROP_SCROLL_BUTTON_LOCK_DEFAULT "libinput Button Scrolling Button Lock Enabled Default"
 
+/* Scroll pixel distance: CARD32, 1 value (with implementation-defined limits) */
+#define LIBINPUT_PROP_SCROLL_PIXEL_DISTANCE "libinput Scrolling Pixel Distance"
+
+/* Scroll pixel distance: CARD32, 1 value, read-only */
+#define LIBINPUT_PROP_SCROLL_PIXEL_DISTANCE_DEFAULT "libinput Scrolling Pixel Distance Default"
+
 /* Click method: BOOL read-only, 2 values in order buttonareas, clickfinger
    shows available click methods */
 #define LIBINPUT_PROP_CLICK_METHODS_AVAILABLE "libinput Click Methods Available"

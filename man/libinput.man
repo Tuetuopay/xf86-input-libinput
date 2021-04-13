@@ -160,6 +160,16 @@ Enables a scroll method. Permitted values are
 Not all devices support all options, if an option is unsupported, the
 default scroll option for this device is used.
 .TP 7
+.BI "Option \*qScrollPixelDistance\*q \*q" int \*q
+Sets the movement distance, in "pixels", required to trigger one logical
+wheel click. This option only applies to the scroll methods
+.BI twofinger,
+.BI edge,
+.BI button.
+See section
+.B SCROLL PIXEL DISTANCE
+for more details.
+.TP 7
 .BI "Option \*qSendEventsMode\*q \*q" (disabled|enabled|disabled-on-external-mouse) \*q
 Sets the send events mode to disabled, enabled, or "disable when an external
 mouse is connected".
@@ -279,6 +289,10 @@ Indicates which scroll methods are available on this device.
 3 boolean values (8 bit, 0 or 1), in order "two-finger", "edge", "button".
 Indicates which scroll method is currently enabled on this device.
 .TP 7
+.BI "libinput Scroll Pixel Distance"
+1 32-bit value (nonzero, with additional implementation-defined range checks).
+Changes the movement distance required to trigger one logical wheel click.
+.TP 7
 .BI "libinput Send Events Modes Available"
 2 boolean values (8 bit, 0 or 1), in order "disabled" and
 "disabled-on-external-mouse". Indicates which send-event modes are available
@@ -396,6 +410,17 @@ it takes left-handed-ness into account.
 .TP
 This feature is provided by this driver, not by libinput.
 
+.SH SCROLL PIXEL DISTANCE
+The X server does not support per-pixel scrolling but it does support
+smooth scrolling. All scroll events however are based around a logical
+unit of scrolling (traditionally corresponding to a wheel click).
+It is thus not possible to scroll by 10 pixels, but it is possible for a
+driver to scroll by 1/10th of a logical wheel click.
+.PP
+libinput provides scroll data in pixels. The \fBScrollPixelDistance\fR
+option defines the amount of movement equivalent to one wheel click. For
+example, a value of 50 means the user has to move a finger by 50 pixels to
+generate one logical click event and each pixel is 1/50th of a wheel click.
 .SH BUGS
 This driver does not work with \fBOption \*qDevice\*q\fR set to an event
 node in \fI/dev/input/by-id\fR and \fI/dev/input/by-path\fR. This can be
