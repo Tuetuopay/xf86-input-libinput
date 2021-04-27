@@ -3684,7 +3684,7 @@ update_mode_prop(InputInfoPtr pInfo,
 }
 
 static inline BOOL
-xf86libinput_check_device (DeviceIntPtr dev,
+xf86libinput_check_device(DeviceIntPtr dev,
 			   Atom atom)
 {
 	InputInfoPtr pInfo = dev->public.devicePrivate;
@@ -3722,7 +3722,7 @@ LibinputSetPropertyTap(DeviceIntPtr dev,
 		if (*data != 0 && *data != 1)
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		if (libinput_device_config_tap_get_finger_count(device) == 0)
@@ -3816,7 +3816,7 @@ LibinputSetPropertyTapButtonmap(DeviceIntPtr dev,
 	    if ((data[0] && data[1]) || (!data[0] && !data[1]))
 		return BadValue;
 
-	    if (!xf86libinput_check_device (dev, atom))
+	    if (!xf86libinput_check_device(dev, atom))
 		return BadMatch;
 	}
 
@@ -3855,7 +3855,7 @@ LibinputSetPropertyCalibration(DeviceIntPtr dev,
 		    data[8] != 1.0)
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		if (!libinput_device_config_calibration_has_matrix(device))
@@ -3889,7 +3889,7 @@ LibinputSetPropertyAccel(DeviceIntPtr dev,
 		if (*data < -1.0 || *data > 1.0)
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		if (libinput_device_config_accel_is_available(device) == 0)
@@ -3929,7 +3929,7 @@ LibinputSetPropertyAccelProfile(DeviceIntPtr dev,
 		if (__builtin_popcount(profiles) > 1)
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		supported = libinput_device_config_accel_get_profiles(device);
@@ -3962,7 +3962,7 @@ LibinputSetPropertyNaturalScroll(DeviceIntPtr dev,
 		if (*data != 0 && *data != 1)
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		if (libinput_device_config_scroll_has_natural_scroll(device) == 0)
@@ -3999,7 +3999,7 @@ LibinputSetPropertySendEvents(DeviceIntPtr dev,
 	if (checkonly) {
 		uint32_t supported;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		supported = libinput_device_config_send_events_get_modes(device);
@@ -4033,7 +4033,7 @@ LibinputSetPropertyLeftHanded(DeviceIntPtr dev,
 		int supported;
 		int left_handed = *data;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		supported = libinput_device_config_left_handed_is_available(device);
@@ -4097,7 +4097,7 @@ LibinputSetPropertyScrollMethods(DeviceIntPtr dev,
 		if (__builtin_popcount(modes) > 1)
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		supported = libinput_device_config_scroll_get_methods(device);
@@ -4130,7 +4130,7 @@ LibinputSetPropertyScrollButton(DeviceIntPtr dev,
 		uint32_t button = *data;
 		uint32_t supported;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		supported = libinput_device_pointer_has_button(device,
@@ -4162,7 +4162,7 @@ LibinputSetPropertyScrollButtonLock(DeviceIntPtr dev,
 		if (enabled != 0 && enabled != 1)
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 	} else {
 		driver_data->options.scroll_buttonlock = enabled;
@@ -4371,7 +4371,7 @@ LibinputSetPropertyHorizScroll(DeviceIntPtr dev,
 		if (enabled != 0 && enabled != 1)
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 	} else {
 		driver_data->options.horiz_scrolling_enabled = enabled;
@@ -4400,7 +4400,7 @@ LibinputSetPropertyRotationAngle(DeviceIntPtr dev,
 		if (*angle < 0.0 || *angle >= 360.0)
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		if (libinput_device_config_rotation_is_available(device) == 0)
@@ -4444,7 +4444,7 @@ LibinputSetPropertyPressureCurve(DeviceIntPtr dev,
 				return BadValue;
 		}
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 
 		if (!cubic_bezier(controls, test_bezier, ARRAY_SIZE(test_bezier)))
@@ -4484,7 +4484,7 @@ LibinputSetPropertyAreaRatio(DeviceIntPtr dev,
 		    (area.x == 0 && area.y != 0))
 			return BadValue;
 
-		if (!xf86libinput_check_device (dev, atom))
+		if (!xf86libinput_check_device(dev, atom))
 			return BadMatch;
 	} else {
 		struct xf86libinput *other;
