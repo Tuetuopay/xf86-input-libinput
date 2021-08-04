@@ -1631,15 +1631,14 @@ static inline bool
 calculate_axis_value(struct xf86libinput *driver_data,
 		     enum libinput_pointer_axis axis,
 		     struct libinput_event_pointer *event,
+		     enum libinput_pointer_axis_source source,
 		     double *value_out)
 {
-	enum libinput_pointer_axis_source source;
 	double value;
 
 	if (!libinput_event_pointer_has_axis(event, axis))
 		return false;
 
-	source = libinput_event_pointer_get_axis_source(event);
 	if (source == LIBINPUT_POINTER_AXIS_SOURCE_WHEEL) {
 		value = get_wheel_scroll_value(driver_data, event, axis);
 	} else {
@@ -1665,7 +1664,9 @@ calculate_axis_value(struct xf86libinput *driver_data,
 }
 
 static void
-xf86libinput_handle_axis(InputInfoPtr pInfo, struct libinput_event_pointer *event)
+xf86libinput_handle_axis(InputInfoPtr pInfo,
+			 struct libinput_event_pointer *event,
+			 enum libinput_pointer_axis_source source)
 {
 	DeviceIntPtr dev = pInfo->dev;
 	struct xf86libinput *driver_data = pInfo->private;
@@ -1678,7 +1679,6 @@ xf86libinput_handle_axis(InputInfoPtr pInfo, struct libinput_event_pointer *even
 
 	valuator_mask_zero(mask);
 
-	source = libinput_event_pointer_get_axis_source(event);
 	switch(source) {
 		case LIBINPUT_POINTER_AXIS_SOURCE_FINGER:
 		case LIBINPUT_POINTER_AXIS_SOURCE_WHEEL:
@@ -1691,6 +1691,7 @@ xf86libinput_handle_axis(InputInfoPtr pInfo, struct libinput_event_pointer *even
 	if (calculate_axis_value(driver_data,
 				 LIBINPUT_POINTER_AXIS_SCROLL_VERTICAL,
 				 event,
+				 source,
 				 &value))
 		valuator_mask_set_double(mask, 3, value);
 
@@ -1700,6 +1701,7 @@ xf86libinput_handle_axis(InputInfoPtr pInfo, struct libinput_event_pointer *even
 	if (calculate_axis_value(driver_data,
 				 LIBINPUT_POINTER_AXIS_SCROLL_HORIZONTAL,
 				 event,
+				 source,
 				 &value))
 		valuator_mask_set_double(mask, 2, value);
 
@@ -2381,7 +2383,8 @@ xf86libinput_handle_event(struct libinput_event *event)
 			break;
 		case LIBINPUT_EVENT_POINTER_AXIS:
 			xf86libinput_handle_axis(pInfo,
-						 libinput_event_get_pointer_event(event));
+						 libinput_event_get_pointer_event(event),
+						 libinput_event_pointer_get_axis_source(event));
 			break;
 		case LIBINPUT_EVENT_TOUCH_FRAME:
 			break;
