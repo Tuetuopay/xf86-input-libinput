@@ -47,6 +47,9 @@ XORG_DEFAULT_OPTIONS
 PKG_CHECK_MODULES(XORG, [xorg-server >= 1.19] xproto [inputproto >= 2.2])
 PKG_CHECK_MODULES(LIBINPUT, [libinput >= 1.11.0])
 
+PKG_CHECK_MODULES(INPUTPROTO24, [inputproto >= 2.3.99.1],
+		  [AC_DEFINE(HAVE_INPUTPROTO24, [1], [inputproto 2.4 is available])])
+
 OLD_LIBS=$LIBS
 OLD_CFLAGS=$CFLAGS
 LIBS="$LIBS $LIBINPUT_LIBS"

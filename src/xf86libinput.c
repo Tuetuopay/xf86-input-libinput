@@ -80,8 +80,10 @@
 #define CAP_TABLET_PAD	0x20
 #define CAP_GESTURE	0x40
 
+#if HAVE_INPUTPROTO24
 #if ABI_XINPUT_VERSION >= SET_ABI_VERSION(24, 4)
 #define HAS_GESTURES
+#endif
 #endif
 
 struct xf86libinput_driver {
