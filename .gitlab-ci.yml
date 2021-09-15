@@ -19,7 +19,8 @@ stages:
   variables:
     FDO_DISTRIBUTION_VERSION: 33
     FDO_DISTRIBUTION_PACKAGES: 'git autoconf automake libtool make xorg-x11-server-devel libudev-devel libevdev-devel libinput-devel xorg-x11-util-macros'
-    FDO_DISTRIBUTION_TAG: '2021-04-06.0'
+    FDO_DISTRIBUTION_EXEC: 'env FDO_CI_CONCURRENT=${FDO_CI_CONCURRENT} bash .gitlab-ci/fedora-install.sh'
+    FDO_DISTRIBUTION_TAG: '2021-09-15.0'
 
 
 fedora@container_build:
