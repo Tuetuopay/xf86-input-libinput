@@ -82,7 +82,7 @@
 
 #if HAVE_INPUTPROTO24
 #if ABI_XINPUT_VERSION >= SET_ABI_VERSION(24, 4)
-#define HAS_GESTURES
+#define HAVE_GESTURES
 #endif
 #endif
 
@@ -1098,7 +1098,7 @@ xf86libinput_init_touch(InputInfoPtr pInfo)
 	InitTouchClassDeviceStruct(dev, ntouches, XIDirectTouch, 2);
 }
 
-#ifdef HAS_GESTURES
+#ifdef HAVE_GESTURES
 static void
 xf86libinput_init_gesture(InputInfoPtr pInfo)
 {
@@ -1351,7 +1351,7 @@ xf86libinput_init(DeviceIntPtr dev)
 	}
 	if (driver_data->capabilities & CAP_TOUCH)
 		xf86libinput_init_touch(pInfo);
-#ifdef HAS_GESTURES
+#ifdef HAVE_GESTURES
 	if (driver_data->capabilities & CAP_GESTURE)
 		xf86libinput_init_gesture(pInfo);
 #endif
@@ -1815,7 +1815,7 @@ xf86libinput_handle_touch(InputInfoPtr pInfo,
 	xf86PostTouchEvent(dev, touchids[slot], type, 0, m);
 }
 
-#ifdef HAS_GESTURES
+#ifdef HAVE_GESTURES
 static void
 xf86libinput_handle_gesture_swipe(InputInfoPtr pInfo,
 				  struct libinput_event_gesture *event,
@@ -2474,7 +2474,7 @@ xf86libinput_handle_event(struct libinput_event *event)
 		case LIBINPUT_EVENT_GESTURE_SWIPE_BEGIN:
 		case LIBINPUT_EVENT_GESTURE_SWIPE_UPDATE:
 		case LIBINPUT_EVENT_GESTURE_SWIPE_END:
-#ifdef HAS_GESTURES
+#ifdef HAVE_GESTURES
 			xf86libinput_handle_gesture_swipe(pInfo,
 							  libinput_event_get_gesture_event(event),
 							  type);
@@ -2483,7 +2483,7 @@ xf86libinput_handle_event(struct libinput_event *event)
 		case LIBINPUT_EVENT_GESTURE_PINCH_BEGIN:
 		case LIBINPUT_EVENT_GESTURE_PINCH_UPDATE:
 		case LIBINPUT_EVENT_GESTURE_PINCH_END:
-#ifdef HAS_GESTURES
+#ifdef HAVE_GESTURES
 			xf86libinput_handle_gesture_pinch(pInfo,
 							  libinput_event_get_gesture_event(event),
 							  type);
@@ -3485,7 +3485,7 @@ xf86libinput_create_subdevice(InputInfoPtr pInfo,
 		options = xf86ReplaceBoolOption(options, "_libinput/cap-pointer", 1);
 	if (capabilities & CAP_TOUCH)
 		options = xf86ReplaceBoolOption(options, "_libinput/cap-touch", 1);
-#ifdef HAS_GESTURES
+#ifdef HAVE_GESTURES
 	if (capabilities & CAP_GESTURE)
 		options = xf86ReplaceBoolOption(options, "_libinput/cap-gesture", 1);
 #endif
@@ -3527,7 +3527,7 @@ caps_from_options(InputInfoPtr pInfo)
 		capabilities |= CAP_POINTER;
 	if (xf86CheckBoolOption(pInfo->options, "_libinput/cap-touch", 0))
 		capabilities |= CAP_TOUCH;
-#ifdef HAS_GESTURES
+#ifdef HAVE_GESTURES
 	if (xf86CheckBoolOption(pInfo->options, "_libinput/cap-gesture", 0))
 		capabilities |= CAP_GESTURE;
 #endif
@@ -3676,7 +3676,7 @@ xf86libinput_pre_init(InputDriverPtr drv,
 			driver_data->capabilities |= CAP_KEYBOARD;
 		if (libinput_device_has_capability(device, LIBINPUT_DEVICE_CAP_TOUCH))
 			driver_data->capabilities |= CAP_TOUCH;
-#ifdef HAS_GESTURES
+#ifdef HAVE_GESTURES
 		if (libinput_device_has_capability(device, LIBINPUT_DEVICE_CAP_GESTURE))
 			driver_data->capabilities |= CAP_GESTURE;
 #endif
