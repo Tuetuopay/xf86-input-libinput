@@ -262,7 +262,7 @@ button pairs. See section
 .B BUTTON DRAG LOCK
 for details.
 .TP 7
-.BI "libinput Horizontal Scrolling Enabled"
+.BI "libinput Horizontal Scroll Enabled"
 1 boolean value (8 bit, 0 or 1). Indicates whether horizontal scrolling
 events are enabled or not.
 .TP 7
