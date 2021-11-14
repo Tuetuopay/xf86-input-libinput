@@ -114,6 +114,11 @@ device button numbers, i.e. the
 .B ButtonMapping
 applies after drag lock.
 .TP 7
+.BI "Option \*qHighResolutionWheelScrolling\*q \*q" bool \*q
+Disables high-resolution wheel scroll events, enabled by default. When enabled,
+the driver forwards only high-resolution wheel scroll events from libinput.
+When disabled, the driver forwards legacy wheel scroll events instead.
+.TP 7
 .BI "Option \*qHorizontalScrolling\*q \*q" bool \*q
 Disables horizontal scrolling. When disabled, this driver will discard any
 horizontal scroll events from libinput. Note that this does not disable
@@ -261,6 +266,10 @@ Either one 8-bit value specifying the meta drag lock button, or a list of
 button pairs. See section
 .B BUTTON DRAG LOCK
 for details.
+.TP 7
+.BI "libinput High Resolution Wheel Scroll Enabled"
+1 boolean value (8 bit, 0 or 1). Indicates whether high-resolution
+wheel scroll events are enabled or not.
 .TP 7
 .BI "libinput Horizontal Scroll Enabled"
 1 boolean value (8 bit, 0 or 1). Indicates whether horizontal scrolling

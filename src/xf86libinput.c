@@ -166,6 +166,7 @@ struct xf86libinput {
 		unsigned char btnmap[MAX_BUTTONS + 1];
 
 		BOOL horiz_scrolling_enabled;
+		BOOL hires_scrolling_enabled;
 
 		float rotation_angle;
 		struct bezier_control_point pressurecurve[4];
@@ -1660,21 +1661,22 @@ get_wheel_scroll_value(struct xf86libinput *driver_data,
 		       enum libinput_pointer_axis axis)
 {
 #if HAVE_LIBINPUT_AXIS_VALUE_V120
-	return get_wheel_120_value(driver_data, event, axis);
-#else
-	return guess_wheel_scroll_value(driver_data, event, axis);
+	if (driver_data->options.hires_scrolling_enabled)
+		return get_wheel_120_value(driver_data, event, axis);
 #endif
+	return guess_wheel_scroll_value(driver_data, event, axis);
 }
 
 static inline double
-get_finger_or_continuous_scroll_value(struct libinput_event_pointer *event,
+get_finger_or_continuous_scroll_value(struct xf86libinput *driver_data,
+				      struct libinput_event_pointer *event,
 				      enum libinput_pointer_axis axis)
 {
 #if HAVE_LIBINPUT_AXIS_VALUE_V120
-	return libinput_event_pointer_get_scroll_value(event, axis);
-#else
-	return libinput_event_pointer_get_axis_value(event, axis);
+	if (driver_data->options.hires_scrolling_enabled)
+		return libinput_event_pointer_get_scroll_value(event, axis);
 #endif
+	return libinput_event_pointer_get_axis_value(event, axis);
 }
 
 static inline bool
@@ -1703,7 +1705,10 @@ calculate_axis_value(struct xf86libinput *driver_data,
 		double dist = driver_data->options.scroll_pixel_distance;
 		assert(dist != 0.0);
 
-		value = get_finger_or_continuous_scroll_value(event, axis);
+		value = get_finger_or_continuous_scroll_value(driver_data,
+							      event,
+							      axis);
+
 		/* We need to scale this value into our scroll increment range
 		 * because that one is constant for the lifetime of the
 		 * device. The user may change the ScrollPixelDistance
@@ -2404,6 +2409,7 @@ xf86libinput_handle_event(struct libinput_event *event)
 	struct libinput_device *device;
 	enum libinput_event_type type;
 	InputInfoPtr pInfo;
+	struct xf86libinput *driver_data;
 	enum event_handling event_handling = EVENT_HANDLED;
 
 	type = libinput_event_get_type(event);
@@ -2413,6 +2419,8 @@ xf86libinput_handle_event(struct libinput_event *event)
 
 	if (!pInfo || !pInfo->dev->public.on)
 		goto out;
+
+	driver_data = pInfo->private;
 
 	switch (type) {
 		case LIBINPUT_EVENT_NONE:
@@ -2437,28 +2445,38 @@ xf86libinput_handle_event(struct libinput_event *event)
 						libinput_event_get_keyboard_event(event));
 			break;
 		case LIBINPUT_EVENT_POINTER_AXIS:
-#if !HAVE_LIBINPUT_AXIS_VALUE_V120
-			/* ignore POINTER_AXIS where we have libinput 1.19 and higher */
+#if HAVE_LIBINPUT_AXIS_VALUE_V120
+			/* ignore POINTER_AXIS where we have libinput 1.19 and
+			   higher and high-resolution scroll is enabled */
+			if (driver_data->options.hires_scrolling_enabled)
+				break;
+#endif
+
 			xf86libinput_handle_axis(pInfo,
 						 event,
 						 libinput_event_pointer_get_axis_source(event));
-#endif
 			break;
 #if HAVE_LIBINPUT_AXIS_VALUE_V120
 		case LIBINPUT_EVENT_POINTER_SCROLL_WHEEL:
-			xf86libinput_handle_axis(pInfo,
-						 event,
-						 LIBINPUT_POINTER_AXIS_SOURCE_WHEEL);
+			if (driver_data->options.hires_scrolling_enabled) {
+				xf86libinput_handle_axis(pInfo,
+							 event,
+							 LIBINPUT_POINTER_AXIS_SOURCE_WHEEL);
+			}
 			break;
 		case LIBINPUT_EVENT_POINTER_SCROLL_FINGER:
-			xf86libinput_handle_axis(pInfo,
-						 event,
-						 LIBINPUT_POINTER_AXIS_SOURCE_FINGER);
+			if (driver_data->options.hires_scrolling_enabled) {
+				xf86libinput_handle_axis(pInfo,
+							 event,
+							 LIBINPUT_POINTER_AXIS_SOURCE_FINGER);
+			}
 			break;
 		case LIBINPUT_EVENT_POINTER_SCROLL_CONTINUOUS:
-			xf86libinput_handle_axis(pInfo,
-						 event,
-						 LIBINPUT_POINTER_AXIS_SOURCE_CONTINUOUS);
+			if (driver_data->options.hires_scrolling_enabled) {
+				xf86libinput_handle_axis(pInfo,
+							 event,
+							 LIBINPUT_POINTER_AXIS_SOURCE_CONTINUOUS);
+			}
 			break;
 #endif
 		case LIBINPUT_EVENT_TOUCH_FRAME:
@@ -3196,6 +3214,15 @@ xf86libinput_parse_horiz_scroll_option(InputInfoPtr pInfo)
 	return xf86SetBoolOption(pInfo->options, "HorizontalScrolling", TRUE);
 }
 
+static inline BOOL
+xf86libinput_parse_hirescroll_option(InputInfoPtr pInfo,
+				     struct libinput_device *device)
+{
+	return xf86SetBoolOption(pInfo->options,
+				 "HighResolutionWheelScrolling",
+				 TRUE);
+}
+
 static inline double
 xf86libinput_parse_rotation_angle_option(InputInfoPtr pInfo,
 					 struct libinput_device *device)
@@ -3358,6 +3385,7 @@ xf86libinput_parse_options(InputInfoPtr pInfo,
 	if (driver_data->capabilities & CAP_POINTER) {
 		xf86libinput_parse_draglock_option(pInfo, driver_data);
 		options->horiz_scrolling_enabled = xf86libinput_parse_horiz_scroll_option(pInfo);
+		options->hires_scrolling_enabled = xf86libinput_parse_hirescroll_option(pInfo, device);
 	}
 
 	xf86libinput_parse_pressurecurve_option(pInfo,
@@ -3835,6 +3863,7 @@ static Atom prop_draglock;
 static Atom prop_horiz_scroll;
 static Atom prop_pressurecurve;
 static Atom prop_area_ratio;
+static Atom prop_hires_scroll;
 
 /* general properties */
 static Atom prop_float;
@@ -4794,6 +4823,33 @@ LibinputSetPropertyAreaRatio(DeviceIntPtr dev,
 	return Success;
 }
 
+static inline int
+LibinputSetPropertyHighResolutionScroll(DeviceIntPtr dev,
+					Atom atom,
+					XIPropertyValuePtr val,
+					BOOL checkonly)
+{
+	InputInfoPtr pInfo = dev->public.devicePrivate;
+	struct xf86libinput *driver_data = pInfo->private;
+	BOOL enabled;
+
+	if (val->format != 8 || val->size != 1 || val->type != XA_INTEGER)
+		return BadMatch;
+
+	enabled = *(BOOL*)val->data;
+	if (checkonly) {
+		if (enabled != 0 && enabled != 1)
+			return BadValue;
+
+		if (!xf86libinput_check_device(dev, atom))
+			return BadMatch;
+	} else {
+		driver_data->options.hires_scrolling_enabled = enabled;
+	}
+
+	return Success;
+}
+
 static int
 LibinputSetProperty(DeviceIntPtr dev, Atom atom, XIPropertyValuePtr val,
                  BOOL checkonly)
@@ -4854,6 +4910,8 @@ LibinputSetProperty(DeviceIntPtr dev, Atom atom, XIPropertyValuePtr val,
 		rc = LibinputSetPropertyPressureCurve(dev, atom, val, checkonly);
 	else if (atom == prop_area_ratio)
 		rc = LibinputSetPropertyAreaRatio(dev, atom, val, checkonly);
+	else if (atom == prop_hires_scroll)
+		rc = LibinputSetPropertyHighResolutionScroll(dev, atom, val, checkonly);
 	else if (atom == prop_device || atom == prop_product_id ||
 		 atom == prop_tap_default ||
 		 atom == prop_tap_drag_default ||
@@ -5809,6 +5867,22 @@ LibinputInitTabletAreaRatioProperty(DeviceIntPtr dev,
 }
 
 static void
+LibinputInitHighResolutionScrollProperty(DeviceIntPtr dev,
+					 struct xf86libinput *driver_data,
+					 struct libinput_device *device)
+{
+	BOOL enabled = driver_data->options.hires_scrolling_enabled;
+
+	if ((driver_data->capabilities & CAP_POINTER) == 0)
+		return;
+
+	prop_hires_scroll = LibinputMakeProperty(dev,
+						 LIBINPUT_PROP_HIRES_WHEEL_SCROLL_ENABLED,
+						 XA_INTEGER, 8,
+						 1, &enabled);
+}
+
+static void
 LibinputInitProperty(DeviceIntPtr dev)
 {
 	InputInfoPtr pInfo  = dev->public.devicePrivate;
@@ -5867,4 +5941,5 @@ LibinputInitProperty(DeviceIntPtr dev)
 	LibinputInitScrollPixelDistanceProperty(dev, driver_data, device);
 	LibinputInitPressureCurveProperty(dev, driver_data);
 	LibinputInitTabletAreaRatioProperty(dev, driver_data);
+	LibinputInitHighResolutionScrollProperty(dev, driver_data, device);
 }

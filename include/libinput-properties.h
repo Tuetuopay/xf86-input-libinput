@@ -207,4 +207,8 @@
 /* Tablet tool area ratio: CARD32, 2 values, w and h */
 #define LIBINPUT_PROP_TABLET_TOOL_AREA_RATIO "libinput Tablet Tool Area Ratio"
 
+/* High-resolution wheel scroll events enabled: BOOL, 1 value (0 or 1).
+ * If disabled, high-resolution wheel scroll events are discarded */
+#define LIBINPUT_PROP_HIRES_WHEEL_SCROLL_ENABLED "libinput High Resolution Wheel Scroll Enabled"
+
 #endif /* _LIBINPUT_PROPERTIES_H_ */
