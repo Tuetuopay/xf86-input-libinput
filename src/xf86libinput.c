@@ -4435,7 +4435,7 @@ LibinputSetPropertyScrollButtonLock(DeviceIntPtr dev,
 	struct xf86libinput *driver_data = pInfo->private;
 	BOOL enabled;
 
-	if (val->format != 8 || val->type != XA_INTEGER || val->size != 1)
+	if (val->format != 8 || val->size != 1 || val->type != XA_INTEGER)
 		return BadMatch;
 
 	enabled = *(BOOL*)val->data;
@@ -4644,7 +4644,7 @@ LibinputSetPropertyHorizScroll(DeviceIntPtr dev,
 	struct xf86libinput *driver_data = pInfo->private;
 	BOOL enabled;
 
-	if (val->format != 8 || val->type != XA_INTEGER || val->size != 1)
+	if (val->format != 8 || val->size != 1 || val->type != XA_INTEGER)
 		return BadMatch;
 
 	enabled = *(BOOL*)val->data;
@@ -4671,7 +4671,7 @@ LibinputSetPropertyScrollPixelDistance(DeviceIntPtr dev,
 	struct xf86libinput *driver_data = pInfo->private;
 	uint32_t dist;
 
-	if (val->format != 32 || val->type != XA_CARDINAL || val->size != 1)
+	if (val->format != 32 || val->size != 1 || val->type != XA_CARDINAL)
 		return BadMatch;
 
 	dist = *(BOOL*)val->data;
