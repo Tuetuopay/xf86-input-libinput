@@ -265,7 +265,7 @@ xf86libinput_is_subdevice(InputInfoPtr pInfo)
 	char *source;
 	BOOL is_subdevice;
 
-	source = xf86SetStrOption(pInfo->options, "_source", "");
+	source = xf86CheckStrOption(pInfo->options, "_source", "");
 	is_subdevice = streq(source, "_driver/libinput");
 	free(source);
 
