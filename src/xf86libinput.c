@@ -5180,7 +5180,7 @@ LibinputInitAccelProperty(DeviceIntPtr dev,
 
 	if (profile_mask & LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE)
 		profiles[0] = TRUE;
-	if (profile_mask & LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE)
+	if (profile_mask & LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT)
 		profiles[1] = TRUE;
 
 	prop_accel_profiles_available = LibinputMakeProperty(dev,
