@@ -3669,7 +3669,7 @@ xf86libinput_pre_init(InputDriverPtr drv,
 			goto fail;
 		}
 
-		/* We ref the device above, then remove it. It get's
+		/* We ref the device above, then remove it. It gets
 		   re-added with the same path in DEVICE_ON, we hope
 		   it doesn't change until then */
 		libinput_device_ref(device);

@@ -56,7 +56,7 @@ extern const struct bezier_control_point bezier_defaults[4];
  * This function requires that c[i].x <= c[i+1].x
  *
  * The curve is mapped into a canvas size [0, bezier_sz)². For each x
- * coordiante in [0, bezier_sz), the matching y coordinate is thus
+ * coordinate in [0, bezier_sz), the matching y coordinate is thus
  * bezier[x].
  *
  * In other words, if you have a range [0,2048) input possible values,
