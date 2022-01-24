@@ -2454,7 +2454,9 @@ xf86libinput_handle_event(struct libinput_event *event)
 
 			xf86libinput_handle_axis(pInfo,
 						 event,
-						 libinput_event_pointer_get_axis_source(event));
+						 libinput_event_pointer_get_axis_source(
+							libinput_event_get_pointer_event(event)
+						 ));
 			break;
 #if HAVE_LIBINPUT_AXIS_VALUE_V120
 		case LIBINPUT_EVENT_POINTER_SCROLL_WHEEL:
