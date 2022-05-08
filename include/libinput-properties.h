@@ -211,4 +211,16 @@
  * If disabled, high-resolution wheel scroll events are discarded */
 #define LIBINPUT_PROP_HIRES_WHEEL_SCROLL_ENABLED "libinput High Resolution Wheel Scroll Enabled"
 
+/* Horizontal scroll speed multiplier: FLOAT, 1 value, 32 bit */
+#define LIBINPUT_PROP_HORIZ_SCROLL_SPEED "libinput Horizontal Scroll Speed"
+
+/* Horizontal scroll speed multiplier: FLOAT, 1 value, 32 bit, read-only */
+#define LIBINPUT_PROP_HORIZ_SCROLL_SPEED_DEFAULT "libinput Horizontal Scroll Speed Default"
+
+/* Vertical scroll speed multiplier: FLOAT, 1 value, 32 bit */
+#define LIBINPUT_PROP_VERT_SCROLL_SPEED "libinput Vertical Scroll Speed"
+
+/* Vertical scroll speed multiplier: FLOAT, 1 value, 32 bit, read-only */
+#define LIBINPUT_PROP_VERT_SCROLL_SPEED_DEFAULT "libinput Vertical Scroll Speed Default"
+
 #endif /* _LIBINPUT_PROPERTIES_H_ */

@@ -173,6 +173,8 @@ struct xf86libinput {
 		struct ratio {
 			int x, y;
 		} area;
+
+		float horiz_scroll_speed, vert_scroll_speed;
 	} options;
 
 	struct draglock draglock;
@@ -778,6 +780,38 @@ LibinputApplyConfigRotation(DeviceIntPtr dev,
 			    driver_data->options.rotation_angle);
 }
 
+static void
+LibinputApplyConfigHorizScrollSpeed(DeviceIntPtr dev,
+				    struct xf86libinput *driver_data,
+				    struct libinput_device *device)
+{
+	InputInfoPtr pInfo = dev->public.devicePrivate;
+
+	if (!subdevice_has_capabilities(dev, CAP_POINTER))
+		return;
+
+	if (libinput_device_config_scroll_speed_set_horiz(device, driver_data->options.horiz_scroll_speed) != LIBINPUT_CONFIG_STATUS_SUCCESS)
+		xf86IDrvMsg(pInfo, X_ERROR,
+			    "Failed to set HorizScrollSpeed to %.2f\n",
+			    driver_data->options.horiz_scroll_speed);
+}
+
+static void
+LibinputApplyConfigVertScrollSpeed(DeviceIntPtr dev,
+				   struct xf86libinput *driver_data,
+				   struct libinput_device *device)
+{
+	InputInfoPtr pInfo = dev->public.devicePrivate;
+
+	if (!subdevice_has_capabilities(dev, CAP_POINTER))
+		return;
+
+	if (libinput_device_config_scroll_speed_set_vert(device, driver_data->options.vert_scroll_speed) != LIBINPUT_CONFIG_STATUS_SUCCESS)
+		xf86IDrvMsg(pInfo, X_ERROR,
+			    "Failed to set VertScrollSpeed to %.2f\n",
+			    driver_data->options.vert_scroll_speed);
+}
+
 static inline void
 LibinputApplyConfig(DeviceIntPtr dev)
 {
@@ -796,6 +830,8 @@ LibinputApplyConfig(DeviceIntPtr dev)
 	LibinputApplyConfigMiddleEmulation(dev, driver_data, device);
 	LibinputApplyConfigDisableWhileTyping(dev, driver_data, device);
 	LibinputApplyConfigRotation(dev, driver_data, device);
+	LibinputApplyConfigHorizScrollSpeed(dev, driver_data, device);
+	LibinputApplyConfigVertScrollSpeed(dev, driver_data, device);
 }
 
 static int
@@ -3353,6 +3389,24 @@ out:
 	free(str);
 }
 
+static double
+xf86libinput_parse_horiz_scroll_speed(InputInfoPtr pInfo,
+					   struct libinput_device *device)
+{
+	return xf86SetRealOption(pInfo->options,
+				 "HorizScrollSpeed",
+				 libinput_device_config_scroll_speed_get_default_horiz(device));
+}
+
+static double
+xf86libinput_parse_vert_scroll_speed(InputInfoPtr pInfo,
+					 struct libinput_device *device)
+{
+	return xf86SetRealOption(pInfo->options,
+				 "VertScrollSpeed",
+				 libinput_device_config_scroll_speed_get_default_vert(device));
+}
+
 static void
 xf86libinput_parse_options(InputInfoPtr pInfo,
 			   struct xf86libinput *driver_data,
@@ -3378,6 +3432,8 @@ xf86libinput_parse_options(InputInfoPtr pInfo,
 	options->middle_emulation = xf86libinput_parse_middleemulation_option(pInfo, device);
 	options->disable_while_typing = xf86libinput_parse_disablewhiletyping_option(pInfo, device);
 	options->rotation_angle = xf86libinput_parse_rotation_angle_option(pInfo, device);
+	options->horiz_scroll_speed = xf86libinput_parse_horiz_scroll_speed(pInfo, device);
+	options->vert_scroll_speed = xf86libinput_parse_vert_scroll_speed(pInfo, device);
 	xf86libinput_parse_calibration_option(pInfo, device, driver_data->options.matrix);
 
 	/* non-libinput options */
@@ -3859,6 +3915,10 @@ static Atom prop_mode_groups_rings;
 static Atom prop_mode_groups_strips;
 static Atom prop_rotation_angle;
 static Atom prop_rotation_angle_default;
+static Atom prop_horiz_scroll_speed;
+static Atom prop_horiz_scroll_speed_default;
+static Atom prop_vert_scroll_speed;
+static Atom prop_vert_scroll_speed_default;
 
 /* driver properties */
 static Atom prop_draglock;
@@ -4852,6 +4912,62 @@ LibinputSetPropertyHighResolutionScroll(DeviceIntPtr dev,
 	return Success;
 }
 
+static inline int
+LibinputSetPropertyHorizScrollSpeed(DeviceIntPtr dev,
+					 Atom atom,
+					 XIPropertyValuePtr val,
+					 BOOL checkonly)
+{
+	InputInfoPtr pInfo = dev->public.devicePrivate;
+	struct xf86libinput *driver_data = pInfo->private;
+	float *speed;
+
+	if (val->format != 32 || val->size != 1 || val->type != prop_float)
+		return BadMatch;
+
+	speed = (float*)val->data;
+
+	if (checkonly) {
+		if (*speed <= 0.0)
+			return BadValue;
+
+		if (!xf86libinput_check_device (dev, atom))
+			return BadMatch;
+	} else {
+		driver_data->options.horiz_scroll_speed = *speed;
+	}
+
+	return Success;
+}
+
+static inline int
+LibinputSetPropertyVertScrollSpeed(DeviceIntPtr dev,
+				       Atom atom,
+				       XIPropertyValuePtr val,
+				       BOOL checkonly)
+{
+	InputInfoPtr pInfo = dev->public.devicePrivate;
+	struct xf86libinput *driver_data = pInfo->private;
+	float *speed;
+
+	if (val->format != 32 || val->size != 1 || val->type != prop_float)
+		return BadMatch;
+
+	speed = (float*)val->data;
+
+	if (checkonly) {
+		if (*speed <= 0.0)
+			return BadValue;
+
+		if (!xf86libinput_check_device (dev, atom))
+			return BadMatch;
+	} else {
+		driver_data->options.vert_scroll_speed = *speed;
+	}
+
+	return Success;
+}
+
 static int
 LibinputSetProperty(DeviceIntPtr dev, Atom atom, XIPropertyValuePtr val,
                  BOOL checkonly)
@@ -4941,6 +5057,10 @@ LibinputSetProperty(DeviceIntPtr dev, Atom atom, XIPropertyValuePtr val,
 		 atom == prop_mode_groups_strips ||
 		 atom == prop_rotation_angle_default)
 		return BadAccess; /* read-only */
+	else if (atom == prop_horiz_scroll_speed)
+		rc = LibinputSetPropertyHorizScrollSpeed(dev, atom, val, checkonly);
+	else if (atom == prop_vert_scroll_speed)
+		rc = LibinputSetPropertyVertScrollSpeed(dev, atom, val, checkonly);
 	else
 		return Success;
 
@@ -5885,6 +6005,54 @@ LibinputInitHighResolutionScrollProperty(DeviceIntPtr dev,
 }
 
 static void
+LibinputInitHorizScrollSpeedProperty(DeviceIntPtr dev,
+				     struct xf86libinput *driver_data,
+				     struct libinput_device *device)
+{
+	float speed = driver_data->options.horiz_scroll_speed;
+
+	prop_horiz_scroll_speed = LibinputMakeProperty(dev,
+						       LIBINPUT_PROP_HORIZ_SCROLL_SPEED,
+						       prop_float, 32,
+						       1, &speed);
+	if (!prop_horiz_scroll_speed )
+		return;
+
+	speed = libinput_device_config_scroll_speed_get_default_horiz(device);
+	prop_horiz_scroll_speed_default = LibinputMakeProperty(dev,
+							       LIBINPUT_PROP_HORIZ_SCROLL_SPEED_DEFAULT,
+							       prop_float, 32,
+							       1, &speed);
+
+	if (!prop_horiz_scroll_speed_default )
+		return;
+}
+
+static void
+LibinputInitVertScrollSpeedProperty(DeviceIntPtr dev,
+				    struct xf86libinput *driver_data,
+				    struct libinput_device *device)
+{
+	float speed = driver_data->options.vert_scroll_speed;
+
+	prop_vert_scroll_speed = LibinputMakeProperty(dev,
+						       LIBINPUT_PROP_VERT_SCROLL_SPEED,
+						       prop_float, 32,
+						       1, &speed);
+	if (!prop_vert_scroll_speed )
+		return;
+
+	speed = libinput_device_config_scroll_speed_get_default_vert(device);
+	prop_vert_scroll_speed_default = LibinputMakeProperty(dev,
+							       LIBINPUT_PROP_VERT_SCROLL_SPEED_DEFAULT,
+							       prop_float, 32,
+							       1, &speed);
+
+	if (!prop_vert_scroll_speed_default )
+		return;
+}
+
+static void
 LibinputInitProperty(DeviceIntPtr dev)
 {
 	InputInfoPtr pInfo  = dev->public.devicePrivate;
@@ -5911,6 +6079,8 @@ LibinputInitProperty(DeviceIntPtr dev)
 	LibinputInitLeftHandedProperty(dev, driver_data, device);
 	LibinputInitModeGroupProperties(dev, driver_data, device);
 	LibinputInitSendEventsProperty(dev, driver_data, device);
+	LibinputInitHorizScrollSpeedProperty(dev, driver_data, device);
+	LibinputInitVertScrollSpeedProperty(dev, driver_data, device);
 
 	/* Device node property, read-only  */
 	device_node = driver_data->path;
